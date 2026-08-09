@@ -1,0 +1,17 @@
+{
+	"permissions": {
+		"allow": [
+			"fetch_url",
+			"apply_patch",
+			"execute(python3 -m:*)",
+			"execute(python3 -:*)",
+			"execute(PYTHONPATH=.deps python3:*)",
+			"execute(curl -sS -X POST http://127.0.0.1:5000/api/debate -H 'Content-Type: application/json' -d '{\"topic\":\"Are AI Agents neceseary?\"}' -o /tmp/debate_result.json -w '\\nHTTP %{http_code}\\n')",
+			"execute(curl -sN 'http://127.0.0.1:5000/api/debate/stream?topic=Are%20AI%20Agents%20neceseary%3F' -o /tmp/debate_stream.txt -w '\\nSTREAM_HTTP %{http_code}\\n')",
+			"execute(command -v:*)",
+			"execute(find .:*)",
+			"execute(rm -rf .venv __pycache__)",
+			"execute(curl -sS http://127.0.0.1:5000/health)"
+		]
+	}
+}

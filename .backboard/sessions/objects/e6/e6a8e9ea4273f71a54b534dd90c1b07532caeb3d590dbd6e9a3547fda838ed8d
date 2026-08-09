@@ -1,0 +1,471 @@
+Metadata-Version: 2.4
+Name: backboard-sdk
+Version: 1.5.15
+Summary: Python SDK for the Backboard API - Build conversational AI applications with persistent memory and intelligent document processing
+Home-page: https://github.com/backboard/backboard-python-sdk
+Author: Backboard
+Author-email: Backboard <support@backboard.io>
+License: MIT
+Project-URL: Homepage, https://backboard.io
+Project-URL: Documentation, https://app.backboard.io/docs
+Keywords: ai,api,sdk,conversational,chatbot,assistant,documents,rag
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Internet :: WWW/HTTP :: HTTP Servers
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: pydantic>=2.0.0
+Provides-Extra: voice
+Requires-Dist: websockets>=12.0; extra == "voice"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: flake8>=5.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: types-httpx; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Backboard Python SDK
+
+A developer-friendly Python SDK for the Backboard API. Build conversational AI applications with persistent memory and intelligent document processing.
+
+> New to Backboard? We include $5 in free credits to get you started and support 1,800+ LLMs across major providers.
+
+## New in v1.5.15
+
+- **Clone assistants**: Use `clone_assistant()` — calls `POST /assistants/{assistant_id}/clone`. Duplicates an assistant's configuration, indexed assistant-level documents (with vector embeddings preserved), and active memories into a new assistant owned by the caller. Toggle `copy_documents` / `copy_memories` to opt out of either. Returns an `AssistantCloneResponse` with the new assistant plus counts of what was copied. The clone is a point-in-time snapshot — source and clone evolve independently afterwards.
+
+### Earlier (v1.5.14)
+
+- **Primary messaging API**: Use `send_message()` — calls `POST /threads/messages`. Omit `thread_id` to start a new conversation (thread is auto-created); pass `thread_id` to continue; pass `assistant_id` to pin new threads to an existing assistant (shared memory and documents).
+- **Tool outputs without `run_id`**: Use `submit_tool_outputs_simple()` — calls `POST /threads/tool-outputs` with `thread_id` and `tool_outputs` only. The server resolves the active run.
+- **Legacy unchanged**: `add_message()` / `submit_tool_outputs()` still map to `POST /threads/{thread_id}/messages` and `POST /threads/{thread_id}/runs/{run_id}/submit-tool-outputs`.
+
+### Earlier (v1.5.13)
+
+- **Thinking (Reasoning Models)**: Pass a `thinking` dict to `add_message` / `send_message` on supported models. Access reasoning via `response.reasoning` (non-streaming) or `reasoning_streaming` events (streaming).
+- **JSON Output**: Pass `json_output=True` on `add_message` / `send_message` (ignored when RAG, web search, or custom tools are active).
+
+
+## Installation
+
+```bash
+pip install backboard-sdk
+```
+
+
+## Quick Start
+
+```python
+import asyncio
+from backboard import BackboardClient
+
+async def main():
+    client = BackboardClient(api_key="your_api_key_here")
+
+    assistant = await client.create_assistant(
+        name="Support Bot",
+        system_prompt="You are a helpful customer support assistant",
+    )
+
+    thread = await client.create_thread(assistant.assistant_id)
+
+    response = await client.add_message(
+        thread_id=thread.thread_id,
+        content="Hello! Can you help me with my account?",
+        llm_provider="openai",
+        model_name="gpt-4o",
+        stream=False,
+    )
+
+    print(response.content)
+
+    # Streaming
+    async for event in await client.add_message(
+        thread_id=thread.thread_id,
+        content="Stream me a short response",
+        stream=True,
+    ):
+        if event.get("type") == "content_streaming":
+            print(event.get("content", ""), end="", flush=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Features
+
+### Memory (NEW in v1.4.0)
+- **Persistent Memory**: Store and retrieve information across conversations
+- **Automatic Context**: Enable memory to automatically search and use relevant context
+- **Manual Management**: Full control with add, update, delete, and list operations
+- **Memory Modes**: Auto (search + write), Readonly (search only), or off
+
+### Assistants
+- Create, list, get, update, and delete assistants
+- Configure custom tools and capabilities
+- Upload documents for assistant-level context
+
+### Threads
+- Create conversation threads under assistants
+- Maintain persistent conversation history
+- Support for message attachments
+
+### Documents
+- Upload documents to assistants or threads
+- Automatic processing and indexing for RAG
+- Support for PDF, Office files, text, and more
+- Real-time processing status tracking
+
+### Messages
+- Send messages with optional file attachments
+- Streaming and non-streaming responses
+- Tool calling support
+- Custom LLM provider and model selection
+
+## API Reference
+
+### Client Initialization
+
+```python
+client = BackboardClient(api_key="your_api_key")
+# or use as an async context manager
+# async with BackboardClient(api_key="your_api_key") as client:
+#     ...
+```
+
+### Assistants
+
+```python
+# Create assistant
+assistant = await client.create_assistant(
+    name="My Assistant",
+    system_prompt="System prompt that guides your assistant",
+    tools=[tool_definition],  # Optional
+    tok_k=15,  # Optional: document chunks retrieved per query (1-100, default 10)
+    custom_fact_extraction_prompt="Extract only preferences.",  # Optional
+    custom_update_memory_prompt="Only update on corrections.",  # Optional
+    # Embedding configuration (optional - defaults to OpenAI text-embedding-3-large with 3072 dims)
+    embedding_provider="cohere",  # Optional: openai, google, cohere, etc.
+    embedding_model_name="embed-english-v3.0",  # Optional
+    embedding_dims=1024,  # Optional
+)
+
+# List assistants (limit: 1–200, skip: 0–10 000)
+assistants = await client.list_assistants(skip=0, limit=100)
+
+# Get assistant
+assistant = await client.get_assistant(assistant_id)
+
+# Update assistant
+assistant = await client.update_assistant(
+    assistant_id,
+    name="New Name",
+    system_prompt="Updated system prompt",
+)
+
+# Delete assistant
+result = await client.delete_assistant(assistant_id)
+
+# Clone assistant (snapshot of config + assistant-level documents + active memories)
+clone = await client.clone_assistant(
+    assistant_id,
+    name="My Assistant (Staging)",  # Optional — defaults to "{source name} Copy"
+    system_prompt="Optional override",  # Optional
+    copy_documents=True,                # Optional (default True)
+    copy_memories=True,                 # Optional (default True)
+)
+print(clone.assistant.assistant_id, clone.documents_cloned, clone.memories_cloned)
+```
+
+### Threads
+
+```python
+# Create thread
+thread = await client.create_thread(assistant_id)
+
+# List threads for a specific assistant (limit: 1–200, skip: 0–10 000)
+assistant_threads = await client.list_threads_for_assistant(assistant_id, skip=0, limit=100)
+
+# List all threads (limit: 1–200, skip: 0–10 000)
+threads = await client.list_threads(skip=0, limit=100)
+
+# Get thread with messages
+thread = await client.get_thread(thread_id)
+
+# Delete thread
+result = await client.delete_thread(thread_id)
+```
+
+### Messages
+
+```python
+# Send message
+response = await client.add_message(
+    thread_id=thread_id,
+    content="Your message here",
+    files=["path/to/file.pdf"],  # Optional attachments
+    llm_provider="openai",  # Optional
+    model_name="gpt-4o",  # Optional
+    stream=False,
+    memory="Auto",  # Optional: "Auto", "Readonly", or "off" (default)
+    # memory_pro="Auto",  # Optional: Memory Pro — higher accuracy (cannot combine with memory)
+    json_output=True,  # Optional: request JSON object output from the model
+)
+
+# Streaming messages
+async for chunk in await client.add_message(thread_id, content="Hello", stream=True):
+    if chunk.get('type') == 'content_streaming':
+        print(chunk.get('content', ''), end='', flush=True)
+```
+
+### Thinking (Reasoning Models)
+
+Pass a `thinking` dict to `add_message` to activate extended reasoning on supported models (e.g. `claude-3-7-sonnet`, `o3`, `o4-mini`). Control reasoning depth with `effort` (low / medium / high) or a token budget via `budget_tokens`.
+
+#### Non-streaming – read `response.reasoning`
+
+```python
+response = await client.add_message(
+    thread_id=thread_id,
+    content="Solve: if 2x + 3 = 11, what is x?",
+    llm_provider="anthropic",
+    model_name="claude-3-7-sonnet-20250219",
+    stream=False,
+    thinking={"effort": "high"},
+)
+
+# response.content  → final answer
+# response.reasoning → full reasoning/thinking text (None if model didn't produce any)
+print("Answer:", response.content)
+if response.reasoning:
+    print("Reasoning:", response.reasoning)
+```
+
+#### Streaming – handle `reasoning_streaming` events
+
+```python
+async for event in await client.add_message(
+    thread_id=thread_id,
+    content="Solve: if 2x + 3 = 11, what is x?",
+    llm_provider="anthropic",
+    model_name="claude-3-7-sonnet-20250219",
+    stream=True,
+    thinking={"effort": "high"},
+):
+    event_type = event.get("type")
+
+    if event_type == "reasoning_streaming":
+        # `content` is the incremental reasoning delta for this chunk.
+        # `accumulated_reasoning` is the full reasoning text received so far —
+        # use this instead of manually concatenating deltas.
+        print(event.get("content", ""), end="", flush=True)
+
+    elif event_type == "content_streaming":
+        print(event.get("content", ""), end="", flush=True)
+```
+
+`accumulated_reasoning` grows monotonically with each `reasoning_streaming` event so you can always hand the latest value to a UI without keeping your own buffer.
+
+### Tool Integration (Simplified in v1.3.3)
+
+#### Tool Definitions
+```python
+# Use plain JSON objects (no verbose SDK classes needed!)
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get current weather",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"}
+                },
+                "required": ["location"]
+            }
+        }
+    }
+]
+
+assistant = await client.create_assistant(
+    name="Weather Assistant",
+    system_prompt="You are a helpful weather assistant",
+    tools=tools,
+)
+```
+
+#### Tool Call Handling
+```python
+import json
+
+# Enhanced object-oriented access with automatic JSON parsing
+response = await client.add_message(
+    thread_id=thread_id,
+    content="What's the weather in San Francisco?",
+    stream=False
+)
+
+if response.status == "REQUIRES_ACTION" and response.tool_calls:
+    tool_outputs = []
+    
+    # Process each tool call
+    for tc in response.tool_calls:
+        if tc.function.name == "get_current_weather":
+            # Get parsed arguments (required parameters are guaranteed by API)
+            args = tc.function.parsed_arguments
+            location = args["location"]
+            
+            # Execute your function and format the output
+            weather_data = {
+                "temperature": "68°F",
+                "condition": "Sunny",
+                "location": location
+            }
+            
+            tool_outputs.append({
+                "tool_call_id": tc.id,
+                "output": json.dumps(weather_data)
+            })
+    
+    # Submit the tool outputs back to continue the conversation
+    final_response = await client.submit_tool_outputs(
+        thread_id=thread_id,
+        run_id=response.run_id,
+        tool_outputs=tool_outputs
+    )
+    
+    print(final_response.content)
+```
+
+### Memory
+
+```python
+# Add a memory
+await client.add_memory(
+    assistant_id=assistant_id,
+    content="User prefers Python programming",
+    metadata={"category": "preference"}
+)
+
+# Get all memories (supports page/page_size pagination)
+memories = await client.get_memories(assistant_id, page=1, page_size=25)
+for memory in memories.memories:
+    print(f"{memory.id}: {memory.content}")
+
+# Get specific memory
+memory = await client.get_memory(assistant_id, memory_id)
+
+# Update memory
+await client.update_memory(
+    assistant_id=assistant_id,
+    memory_id=memory_id,
+    content="Updated content"
+)
+
+# Delete memory
+await client.delete_memory(assistant_id, memory_id)
+
+# Get memory stats
+stats = await client.get_memory_stats(assistant_id)
+print(f"Total memories: {stats.total_memories}")
+
+# Use memory in conversation
+response = await client.add_message(
+    thread_id=thread_id,
+    content="What do you know about me?",
+    memory="Auto"  # Enable memory search and automatic updates
+)
+```
+
+
+### Documents
+
+```python
+# Upload document to assistant
+document = await client.upload_document_to_assistant(
+    assistant_id=assistant_id,
+    file_path="path/to/document.pdf",
+)
+
+# Upload document to thread
+document = await client.upload_document_to_thread(
+    thread_id=thread_id,
+    file_path="path/to/document.pdf",
+)
+
+# List assistant documents
+documents = await client.list_assistant_documents(assistant_id)
+
+# List thread documents
+documents = await client.list_thread_documents(thread_id)
+
+# Get document status
+document = await client.get_document_status(document_id)
+
+# Delete document
+result = await client.delete_document(document_id)
+```
+
+## Error Handling
+
+The SDK includes comprehensive error handling:
+
+```python
+from backboard import (
+    BackboardAPIError,
+    BackboardValidationError,
+    BackboardNotFoundError,
+    BackboardRateLimitError,
+    BackboardServerError,
+)
+
+async def demo_err():
+    try:
+        await client.get_assistant("invalid_id")
+    except BackboardNotFoundError:
+        print("Assistant not found")
+    except BackboardValidationError as e:
+        print(f"Validation error: {e}")
+    except BackboardAPIError as e:
+        print(f"API error: {e}")
+```
+
+## Supported File Types
+
+The SDK supports uploading the following file types:
+- **Documents**: `.pdf`, `.doc`, `.docx`, `.ppt`, `.pptx`, `.xls`, `.xlsx`
+- **Text / Data**: `.txt`, `.csv`, `.md`, `.markdown`, `.json`, `.jsonl`, `.xml`
+- **Code**: `.py`, `.js`, `.ts`, `.jsx`, `.tsx`, `.html`, `.css`, `.cpp`, `.c`, `.h`, `.java`, `.go`, `.rs`, `.rb`, `.php`, `.sql`
+- **Images** *(with embedded-image RAG support)*: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.tiff`, `.tif`
+
+## Requirements
+
+- Python 3.8+
+- httpx >= 0.27.0
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+- Documentation: https://app.backboard.io/docs
+- Email: support@backboard.io
