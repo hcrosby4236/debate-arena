@@ -91,119 +91,116 @@ HTML = r"""
   <title>Debate Arena</title>
   <style>
     :root {
-      --bg: #f4f7fb;
-      --panel: rgba(255,255,255,.86);
-      --text: #132033;
-      --muted: #627084;
-      --accent: #6557ff;
-      --accent-2: #18b6a4;
-      --danger: #d43f5e;
-      --border: rgba(36,48,72,.14);
-      --shadow: 0 24px 80px rgba(26,35,61,.15);
+      --bg: #fafafa;
+      --panel: #ffffff;
+      --text: #1a1a1a;
+      --muted: #767676;
+      --accent: #3d3dff;
+      --danger: #c0304a;
+      --border: #e4e4e4;
     }
     body.dark {
-      --bg: #0c1020;
-      --panel: rgba(20,27,48,.84);
-      --text: #eef3ff;
-      --muted: #a9b4ca;
-      --accent: #8b7cff;
-      --accent-2: #24d3bc;
-      --danger: #ff6685;
-      --border: rgba(220,230,255,.16);
-      --shadow: 0 24px 90px rgba(0,0,0,.34);
+      --bg: #121212;
+      --panel: #1a1a1a;
+      --text: #f0f0f0;
+      --muted: #9a9a9a;
+      --accent: #8b8bff;
+      --danger: #ff7a91;
+      --border: #2c2c2c;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      font-family: -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
       min-height: 100vh;
       color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(101,87,255,.25), transparent 34rem),
-        radial-gradient(circle at bottom right, rgba(24,182,164,.20), transparent 30rem),
-        var(--bg);
-      transition: background .25s ease, color .25s ease;
+      background: var(--bg);
+      transition: background .2s ease, color .2s ease;
     }
-    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 56px; }
-    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 36px; }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .logo { width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: var(--shadow); }
-    h1 { font-size: clamp(2.2rem, 6vw, 5rem); letter-spacing: -.07em; margin: 0; line-height: .92; }
-    .tagline { color: var(--muted); margin: 8px 0 0; font-size: 1.05rem; }
+    .wrap { width: min(720px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 64px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+    header strong { font-size: 1rem; letter-spacing: -.01em; }
     .theme-toggle, button {
       border: 1px solid var(--border);
       color: var(--text);
       background: var(--panel);
-      border-radius: 999px;
-      padding: 12px 16px;
+      border-radius: 8px;
+      padding: 10px 14px;
       cursor: pointer;
-      font-weight: 700;
-      backdrop-filter: blur(14px);
+      font: inherit;
+      font-weight: 500;
+      font-size: .85rem;
     }
-    .hero, .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-    .hero { padding: clamp(22px, 5vw, 42px); margin-bottom: 22px; }
-    form { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; margin-top: 24px; }
+    .theme-toggle:hover, button:hover { border-color: var(--muted); }
+
+    h1 { font-size: 2.1rem; font-weight: 650; letter-spacing: -.02em; margin: 0 0 8px; }
+    .tagline { color: var(--muted); margin: 0 0 28px; font-size: .95rem; line-height: 1.5; }
+
+    form { display: flex; flex-direction: column; gap: 12px; }
     textarea {
-      min-height: 84px;
+      min-height: 72px;
       resize: vertical;
       border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 18px 20px;
+      border-radius: 8px;
+      padding: 14px 16px;
       font: inherit;
+      font-size: .95rem;
       color: var(--text);
-      background: rgba(255,255,255,.55);
+      background: var(--panel);
       outline: none;
     }
-    body.dark textarea { background: rgba(5,8,18,.44); }
+    textarea:focus { border-color: var(--accent); }
     .start {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      align-self: flex-start;
+      background: var(--accent);
       color: white;
       border: 0;
-      padding: 18px 22px;
-      border-radius: 22px;
-      min-height: 84px;
-      box-shadow: 0 18px 46px rgba(101,87,255,.28);
+      padding: 10px 18px;
     }
+    .start:hover { opacity: .9; border-color: transparent; }
+    .start:disabled { opacity: .5; cursor: default; }
+
     .status {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 18px;
+      gap: 8px;
+      margin-top: 16px;
       color: var(--muted);
-      min-height: 28px;
-      font-weight: 650;
+      font-size: .85rem;
+      min-height: 20px;
     }
-    .pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 8px rgba(24,182,164,.12); }
+    .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
     .hidden { display: none !important; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; margin-top: 18px; }
-    .card { padding: 24px; }
-    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
-    .metric { border: 1px solid var(--border); border-radius: 22px; padding: 18px; background: rgba(255,255,255,.28); }
-    body.dark .metric { background: rgba(255,255,255,.05); }
-    .metric b { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-    .metric span { font-size: 1.15rem; font-weight: 850; }
-    h2, h3 { margin: 0 0 12px; letter-spacing: -.03em; }
-    .arg { padding: 16px 0; border-top: 1px solid var(--border); }
+
+    section.card-section { margin-top: 40px; padding-top: 40px; border-top: 1px solid var(--border); }
+    .card { border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; background: var(--panel); }
+    .card + .card { margin-top: 16px; }
+
+    .summary { display: flex; gap: 24px; margin: 16px 0 24px; flex-wrap: wrap; }
+    .metric b { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+    .metric span { font-size: 1rem; font-weight: 650; }
+
+    h2 { font-size: 1.1rem; font-weight: 650; margin: 0 0 4px; letter-spacing: -.01em; }
+    h3 { font-size: .82rem; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 20px 0 8px; }
+    h3:first-of-type { margin-top: 0; }
+    p { line-height: 1.55; font-size: .92rem; margin: 0 0 4px; }
+
+    .arg { padding: 14px 0; border-top: 1px solid var(--border); }
     .arg:first-of-type { border-top: 0; padding-top: 0; }
-    .arg-title { font-weight: 850; margin-bottom: 8px; }
-    .sources { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    .sources a { color: var(--accent); border: 1px solid var(--border); border-radius: 999px; padding: 7px 10px; text-decoration: none; font-size: .88rem; background: rgba(255,255,255,.28); }
-    .error { color: var(--danger); background: rgba(212,63,94,.10); border: 1px solid rgba(212,63,94,.35); padding: 16px; border-radius: 18px; margin-top: 16px; }
-    pre { white-space: pre-wrap; word-break: break-word; }
-    @media (max-width: 760px) { form, .grid, .summary { grid-template-columns: 1fr; } .start { min-height: auto; } header { align-items: start; } }
+    .arg-title { font-weight: 650; margin-bottom: 6px; font-size: .95rem; }
+    .sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .sources a { color: var(--accent); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; text-decoration: none; font-size: .78rem; }
+    .sources a:hover { border-color: var(--accent); }
+
+    .error { color: var(--danger); background: transparent; border: 1px solid var(--danger); padding: 14px 16px; border-radius: 8px; margin-top: 16px; font-size: .88rem; }
+    pre { white-space: pre-wrap; word-break: break-word; font-size: .85rem; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand"><div class="logo"></div><div><strong>Multi-Agent Web App</strong><div class="tagline">Pro vs. Con vs. Moral Judge</div></div></div>
-      <button class="theme-toggle" id="themeToggle" type="button">Toggle dark/light</button>
+      <strong>Debate Arena</strong>
+      <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
     </header>
 
     <section class="hero">
@@ -211,28 +208,31 @@ HTML = r"""
       <p class="tagline">Submit a question. Two research agents build the strongest cases, then a judge declares a morally grounded winner.</p>
       <form id="debateForm">
         <textarea id="topic" placeholder="Example: Are AI Agents necessary?" required></textarea>
-        <button class="start" id="startBtn" type="submit">Start the debate!</button>
+        <button class="start" id="startBtn" type="submit">Start the debate</button>
       </form>
       <div class="status" id="status"><span class="pulse hidden" id="pulse"></span><span id="statusText">Ready.</span></div>
       <div id="error" class="error hidden"></div>
     </section>
 
-    <section id="results" class="hidden">
+    <section id="results" class="card-section hidden">
       <div class="card">
-        <h2>Results</h2>
+        <h2>Result</h2>
         <div class="summary">
           <div class="metric"><b>Winning side</b><span id="winner">—</span></div>
           <div class="metric"><b>Public agreement estimate</b><span id="popularity">—</span></div>
-          <div class="metric"><b>Agents</b><span>PRO · CONS · JUDGE</span></div>
         </div>
-        <h3 style="margin-top:22px">Why the winner won</h3>
+        <h3>Why the winner won</h3>
         <p id="why"></p>
         <h3>Moral reasoning</h3>
         <p id="moral"></p>
       </div>
-      <div class="grid">
-        <div class="card"><h2>Arguments For</h2><div id="proArgs"></div></div>
-        <div class="card"><h2>Arguments Against</h2><div id="conArgs"></div></div>
+      <div class="card">
+        <h2>Arguments For</h2>
+        <div id="proArgs"></div>
+      </div>
+      <div class="card">
+        <h2>Arguments Against</h2>
+        <div id="conArgs"></div>
       </div>
     </section>
   </div>
