@@ -17,7 +17,6 @@ Submit a debate topic, and three agents take it from there:
 On the first run, the app creates these three Backboard assistants and saves their IDs to `agents.json`. Later runs reuse the same assistants.
 
 ![Debate results screenshot](screenshot-results.png)
-*Replace this with a screenshot of a finished debate, showing both arguments and the verdict.*
 
 ## Using the app
 
